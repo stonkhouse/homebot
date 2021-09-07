@@ -19,7 +19,7 @@ stonkbot
 *.env
 
 # config files
-
+config.yml
 
 # misc goland / vscode
 /.idea
