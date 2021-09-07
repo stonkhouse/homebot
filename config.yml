@@ -1,0 +1,7 @@
+server:
+  port: "8080"
+
+database:
+  db_name: "DB NAME"
+  db_username: "USERNAME"
+  db_password: "PASSWORD"
