@@ -20,9 +20,9 @@ func main() {
 	if err := viper.Unmarshal(&config); err != nil {
 		fmt.Printf("Error decoding config file: %s\n", err)
 	}
-	MainRouter := gin.Default()
-	MainRouter.GET("", healthcheck.GetHealth)
-	err := MainRouter.Run(":" + config.Server.Port)
+	mainRouter := gin.Default()
+	mainRouter.GET("", healthcheck.GetHealth)
+	err := mainRouter.Run(":" + config.Server.Port)
 	if err != nil {
 		return
 	}
