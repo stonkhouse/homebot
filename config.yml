@@ -5,3 +5,6 @@ database:
   db_name: "DB NAME"
   db_username: "USERNAME"
   db_password: "PASSWORD"
+
+telebot:
+  api_token: "SECRET_TOKEN_HERE"
