@@ -2,12 +2,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
 	"gopkg.in/tucnak/telebot.v2"
 	"stonkhouse/stonkbot/bot"
 	c "stonkhouse/stonkbot/config"
-	"stonkhouse/stonkbot/healthcheck"
 	"time"
 )
 
@@ -33,15 +31,6 @@ func main() {
 	bot.RegisterBot(homebot)
 	if err != nil {
 		fmt.Printf("Error starting up bot: %s", err)
-		return
-	}
-
-	//initializing server
-	mainRouter := gin.Default()
-	mainRouter.GET("", healthcheck.GetHealth)
-	err = mainRouter.Run(":" + config.Server.Port)
-	if err != nil {
-		fmt.Printf("Error starting up server: %s", err)
 		return
 	}
 
