@@ -6,9 +6,13 @@ import (
 )
 
 func RegisterBot(homebot *telebot.Bot) {
-	fmt.Printf("Bot is starting: %s", homebot.Token)
+	fmt.Printf("Bot is starting...")
 	homebot.Handle("/start", func(m *telebot.Message) {
-		homebot.Send(m.Sender, "HELLO")
+		_, err := homebot.Send(m.Sender, "HELLO")
+		if err != nil {
+			fmt.Printf("Error sending hello: %s", err)
+			return
+		}
 	})
 	homebot.Start()
 }
