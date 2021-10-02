@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/spf13/viper"
 	"gopkg.in/tucnak/telebot.v2"
-	"stonkhouse/stonkbot/bot"
+	. "stonkhouse/stonkbot/bot"
 	c "stonkhouse/stonkbot/config"
 	"time"
 )
@@ -23,12 +23,15 @@ func main() {
 	}
 
 	//initializing bot
-	homebot, err := telebot.NewBot(telebot.Settings{
+	bot, err := telebot.NewBot(telebot.Settings{
 		Token:  config.Telebot.Token,
 		Poller: &telebot.LongPoller{Timeout: 10 * time.Second},
 	})
 
-	bot.RegisterBot(homebot)
+	homebotHandler := &BotHandler{
+		Bot: bot,
+	}
+	homebotHandler.RegisterBot()
 	if err != nil {
 		fmt.Printf("Error starting up bot: %s", err)
 		return
