@@ -10,5 +10,6 @@ type BotHandler struct {
 }
 type SetupOption struct {
 	Option      string
+	Text        string
 	Description string
 }

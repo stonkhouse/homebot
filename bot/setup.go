@@ -20,17 +20,17 @@ func (h *BotHandler) HandleInlineQuery(q *tb.Query) {
 	options := make([]SetupOption, 0)
 	options = append(options, SetupOption{
 		Option:      "Setup Bot",
+		Text:        "Setting up Homebot in this group!",
 		Description: "Press here to setup homebot in your group",
 	})
 	results := make(tb.Results, OPTION_NUMBER)
-	for i, _ := range options {
+	for i := range options {
 		result := &tb.ArticleResult{
 			Title:       options[i].Option,
-			Text:        options[i].Option,
+			Text:        options[i].Text,
 			Description: options[i].Description,
 			URL:         "",
 		}
-
 		results[i] = result
 		// needed to set a unique string ID for each result
 		results[i].SetResultID(strconv.Itoa(i))
@@ -41,14 +41,5 @@ func (h *BotHandler) HandleInlineQuery(q *tb.Query) {
 	})
 	if err != nil {
 		fmt.Printf("Error in inline query: %s\n", err)
-	}
-}
-func (h *BotHandler) HandleSetup(chosen *tb.ChosenInlineResult) {
-	if chosen.ResultID != SETUP_ID {
-		return
-	}
-	_, err := h.Bot.Send(&chosen.From, "Setting up Homebot!")
-	if err != nil {
-		return
 	}
 }
