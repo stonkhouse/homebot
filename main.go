@@ -13,6 +13,7 @@ func main() {
 	var (
 		config c.Configurations
 	)
+
 	//Reading configuration files
 	viper.SetConfigFile("config.yml")
 	if err := viper.ReadInConfig(); err != nil {

@@ -8,3 +8,7 @@ type BotHandler struct {
 	//menu     *tb.ReplyMarkup
 	Bot *tb.Bot
 }
+type SetupOption struct {
+	Option      string
+	Description string
+}

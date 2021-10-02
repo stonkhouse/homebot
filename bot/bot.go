@@ -9,6 +9,8 @@ func (h *BotHandler) RegisterBot() {
 	fmt.Printf("Bot is starting...")
 	fmt.Printf(h.Bot.Token)
 	h.Bot.Handle("/start", h.HandleStart)
+	h.Bot.Handle(telebot.OnQuery, h.HandleInlineQuery)
+	h.Bot.Handle(telebot.OnChosenInlineResult, h.HandleSetup)
 	h.Bot.Start()
 }
 
