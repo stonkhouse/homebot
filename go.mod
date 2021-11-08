@@ -3,6 +3,7 @@ module stonkhouse/stonkbot
 go 1.16
 
 require (
+	firebase.google.com/go v3.13.0+incompatible
 	github.com/kr/pretty v0.3.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rogpeppe/go-internal v1.8.0 // indirect

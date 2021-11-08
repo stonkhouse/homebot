@@ -2,7 +2,7 @@ package config
 
 type Configurations struct {
 	Server   ServerConfigurations
-	Database DBConfigurations
+	Firebase DBConfigurations
 	Telebot  TelebotConfigurations
 }
 
@@ -11,9 +11,7 @@ type ServerConfigurations struct {
 }
 
 type DBConfigurations struct {
-	Name     string
-	Username string
-	Password string
+	ConfigPath string
 }
 
 type TelebotConfigurations struct {

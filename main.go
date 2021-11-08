@@ -1,8 +1,11 @@
 package main
 
 import (
+	"context"
+	firebase "firebase.google.com/go"
 	"fmt"
 	"github.com/spf13/viper"
+	"google.golang.org/api/option"
 	"gopkg.in/tucnak/telebot.v2"
 	. "stonkhouse/stonkbot/bot"
 	c "stonkhouse/stonkbot/config"
@@ -29,8 +32,19 @@ func main() {
 		Poller: &telebot.LongPoller{Timeout: 10 * time.Second},
 	})
 
+	//initializing firebase
+	opt := option.WithCredentialsFile(config.Firebase.ConfigPath)
+	firebaseApp, err := firebase.NewApp(context.Background(), nil, opt)
+	if err != nil {
+		fmt.Printf("Error initializing Firebase App: %s\n", err)
+	}
+	firestore, err := firebaseApp.Firestore(context.Background())
+	if err != nil {
+		fmt.Printf("Error initializing Firestore: %s\n", err)
+	}
 	homebotHandler := &BotHandler{
-		Bot: bot,
+		Bot:       bot,
+		Firestore: firestore,
 	}
 	homebotHandler.RegisterBot()
 	if err != nil {
