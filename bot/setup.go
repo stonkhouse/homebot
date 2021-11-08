@@ -158,7 +158,7 @@ func (h *BotHandler) HandleJoin(m *telebot.Message) {
 			houseDoc := h.Firestore.Collection(HOUSE_COLLECTION_PATH).Doc(strconv.FormatInt(house.ID, 10))
 			_, err = houseDoc.Set(context.Background(), house)
 			fmt.Printf("User added to the house")
-			reply := fmt.Sprintf("User @%s has been successfully added to this house.\nWelcome!", userObj.Username)
+			reply := fmt.Sprintf("User @%s has been successfully added to this house.\nWelcome!🎉", userObj.Username)
 			_, _ = h.Bot.Reply(m, reply)
 		} else {
 			_, _ = h.Bot.Send(m.Sender, "Sorry, the password that you entered is not correct, please type /join in your house group again :(")
