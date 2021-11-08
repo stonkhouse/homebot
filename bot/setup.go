@@ -27,6 +27,11 @@ func (h *BotHandler) HandleStartHouse(m *telebot.Message) {
 		password   string
 		paylahLink string
 	)
+	// 0. If chat is not a group, exit
+	if !m.FromGroup() {
+		_, _ = h.Bot.Reply(m, "You can only run this command within a group!")
+		return
+	}
 
 	houseID := m.Chat.ID
 	house := h.queryHouseByID(houseID)
@@ -48,20 +53,23 @@ func (h *BotHandler) HandleStartHouse(m *telebot.Message) {
 	password = <-passwordChannel
 	fmt.Printf("Password set: %s", password)
 
+	//TODO: Extract the set paylah link to a function to avoid repetition
+
 	//	4. bot prompts user to send paylah link
 	paylahChannel = make(chan string)
 	_, _ = h.Bot.Send(m.Sender, "Please enter your personal PayLah! Wallet Link")
 	h.Bot.Handle(telebot.OnText, h.setPaylahLink)
 	paylahLink = <-paylahChannel
-	fmt.Printf("Password set: %s", paylahLink)
+	fmt.Printf("Paylah Link set: %s", paylahLink)
 
 	//	5. add user to the db
 	userObj := &User{
 		ID:         m.Sender.ID,
 		Username:   m.Sender.Username,
 		PaylahLink: paylahLink,
+		HouseID:    houseID,
 	}
-	fmt.Printf("User ID: %d", userObj.ID)
+	fmt.Printf("User house ID: %d", userObj.HouseID)
 	fmt.Printf("Username: %s", userObj.Username)
 	fmt.Printf("Paylah link: %s", userObj.PaylahLink)
 
@@ -74,6 +82,7 @@ func (h *BotHandler) HandleStartHouse(m *telebot.Message) {
 	members = append(members, userObj)
 
 	houseObj := &House{
+		ID:        houseID,
 		HouseName: m.Chat.Title,
 		Members:   members,
 		Password:  password,
@@ -90,17 +99,96 @@ func (h *BotHandler) HandleStartHouse(m *telebot.Message) {
 	return
 }
 func (h *BotHandler) HandleJoin(m *telebot.Message) {
-	//1. Bot PM user "pls enter one time password"
-	//2. if successful, request for paylah link
-	//3. add the paylah link to the DB
-	//4.
+	userID := m.Sender.ID
+	user := h.queryUserByID(userID)
+	house := h.queryHouseByID(m.Chat.ID)
+
+	//0a. House should exist
+	if house == nil {
+		_, _ = h.Bot.Reply(m, "House doesn't exist. Please run the /start_house command first :)")
+		return
+	}
+	//0b. User should either not exist or exist but not bound to a house
+	if user != nil {
+		if user.HouseID != 0 {
+			userHouse := h.queryHouseByID(user.HouseID)
+			reply := fmt.Sprintf("You already belong to House: %s\n Please type /leave in that house before joining a new house!", userHouse.HouseName)
+			_, _ = h.Bot.Reply(m, reply)
+			return
+		}
+	}
+
+	//1. Bot PM user "pls enter house password"
+	msg := fmt.Sprintf("I see that you're trying to join House: %s\nPlease enter the house password!", house.HouseName)
+	_, _ = h.Bot.Send(m.Sender, msg)
+	houseID := m.Chat.ID
+	houseObj := h.queryHouseByID(houseID)
+	if houseObj == nil {
+		return
+	} else {
+		passwordChannel = make(chan string)
+		h.Bot.Handle(telebot.OnText, h.checkPassword)
+		password := <-passwordChannel
+
+		//2. if successful, request for paylah link
+		if password == house.Password {
+			paylahChannel = make(chan string)
+			_, _ = h.Bot.Send(m.Sender, "Please enter your personal PayLah! Wallet Link")
+			h.Bot.Handle(telebot.OnText, h.setPaylahLink)
+			paylahLink := <-paylahChannel
+			fmt.Printf("PayLah Link set: %s", paylahLink)
+
+			userObj := &User{
+				ID:         m.Sender.ID,
+				Username:   m.Sender.Username,
+				PaylahLink: paylahLink,
+				HouseID:    houseID,
+			}
+			fmt.Printf("User house ID: %d", userObj.HouseID)
+			fmt.Printf("Username: %s", userObj.Username)
+			fmt.Printf("Paylah link: %s", userObj.PaylahLink)
+
+			userDoc := h.Firestore.Collection(USER_COLLECTION_PATH).Doc(strconv.Itoa(m.Sender.ID))
+			_, err := userDoc.Create(context.Background(), userObj)
+			fmt.Printf("User Created!")
+			if err != nil {
+				fmt.Printf(err.Error())
+			}
+			house.Members = append(house.Members, userObj)
+			houseDoc := h.Firestore.Collection(HOUSE_COLLECTION_PATH).Doc(strconv.FormatInt(house.ID, 10))
+			_, err = houseDoc.Set(context.Background(), house)
+			fmt.Printf("User added to the house")
+			reply := fmt.Sprintf("User @%s has been successfully added to this house.\nWelcome!", userObj.Username)
+			_, _ = h.Bot.Reply(m, reply)
+		} else {
+			_, _ = h.Bot.Send(m.Sender, "Sorry, the password that you entered is not correct, please type /join in your house group again :(")
+		}
+
+	}
 }
 func (h *BotHandler) HandleOnAddToGroup(m *telebot.Message) {
 	//	1. Check the database, see if group ID exists in the DB
 	//	1a. if group exists, bot: "Hello welcome back", move to 3
 	//	1b. if group doesn't exist, bot: "Hello thanks for using homebot"
 }
-
+func (h *BotHandler) queryUserByID(userID int) *User {
+	userDoc, err := h.Firestore.Doc(USER_COLLECTION_PATH + "/" + strconv.Itoa(userID)).Get(context.Background())
+	if err != nil {
+		if status.Code(err) == codes.NotFound {
+			fmt.Printf("User not found")
+		} else {
+			fmt.Printf("Error in fetching user: %s\n", err)
+		}
+		return nil
+	}
+	user := &User{}
+	err = userDoc.DataTo(user)
+	if err != nil {
+		fmt.Print("Error in storing data to house object")
+		return nil
+	}
+	return user
+}
 func (h *BotHandler) queryHouseByID(houseID int64) *House {
 	houseDoc, err := h.Firestore.Doc(HOUSE_COLLECTION_PATH + "/" + strconv.FormatInt(houseID, 10)).Get(context.Background())
 	if err != nil {
@@ -127,17 +215,26 @@ func (h *BotHandler) setPassword(m *telebot.Message) {
 		}
 	}
 }
+func (h *BotHandler) checkPassword(m *telebot.Message) {
+	for {
+		if m.Chat.Username == m.Sender.Username {
+			passwordChannel <- m.Text
+		}
+	}
+}
 func (h *BotHandler) setPaylahLink(m *telebot.Message) {
 	for {
-		if strings.Contains(m.Text, DBS_PAYLAH_LINK_SUBSTRING) {
-			paylahChannel <- m.Text
-			_, _ = h.Bot.Reply(m, "PayLah Link successfully set!")
-			//unset the handler
-			h.Bot.Handle(telebot.OnText, func() {})
-			return
-		} else {
-			_, _ = h.Bot.Reply(m, "Please enter a valid PayLah! link")
-			return
+		if m.Chat.Username == m.Sender.Username {
+			if strings.Contains(m.Text, DBS_PAYLAH_LINK_SUBSTRING) {
+				paylahChannel <- m.Text
+				_, _ = h.Bot.Reply(m, "PayLah Link successfully set!")
+				//unset the handler
+				h.Bot.Handle(telebot.OnText, func() {})
+				return
+			} else {
+				_, _ = h.Bot.Reply(m, "Please enter a valid PayLah! link")
+				return
+			}
 		}
 	}
 }

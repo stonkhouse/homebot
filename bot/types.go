@@ -17,6 +17,7 @@ type SetupOption struct {
 }
 
 type House struct {
+	ID        int64
 	HouseName string
 	Members   []*User
 	Password  string
@@ -26,4 +27,5 @@ type User struct {
 	ID         int
 	Username   string
 	PaylahLink string
+	HouseID    int64
 }

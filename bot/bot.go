@@ -11,6 +11,7 @@ func (h *BotHandler) RegisterBot() {
 	//Setup commands
 	h.Bot.Handle("/start", h.HandleStart)
 	h.Bot.Handle("/start_house", h.HandleStartHouse)
+	h.Bot.Handle("/join", h.HandleJoin)
 	h.Bot.Handle(telebot.OnAddedToGroup, h.HandleOnAddToGroup)
 	h.Bot.Start()
 }
