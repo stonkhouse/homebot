@@ -23,6 +23,7 @@ type House struct {
 }
 
 type User struct {
-	ID       int64
-	Username string
+	ID         int
+	Username   string
+	PaylahLink string
 }
