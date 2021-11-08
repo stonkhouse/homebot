@@ -74,7 +74,7 @@ func (h *BotHandler) HandleStartHouse(m *telebot.Message) {
 	fmt.Printf("Paylah link: %s", userObj.PaylahLink)
 
 	userDoc := h.Firestore.Collection(USER_COLLECTION_PATH).Doc(strconv.Itoa(m.Sender.ID))
-	_, err := userDoc.Create(context.Background(), userObj)
+	_, err := userDoc.Set(context.Background(), userObj)
 	fmt.Printf("User Created!")
 	if err != nil {
 		fmt.Printf(err.Error())
@@ -176,9 +176,16 @@ func (h *BotHandler) HandleJoin(m *telebot.Message) {
 	}
 }
 func (h *BotHandler) HandleOnAddToGroup(m *telebot.Message) {
+	houseID := m.Chat.ID
 	//	1. Check the database, see if group ID exists in the DB
+	house := h.queryHouseByID(houseID)
 	//	1a. if group exists, bot: "Hello welcome back", move to 3
-	//	1b. if group doesn't exist, bot: "Hello thanks for using homebot"
+	if house != nil {
+		_, _ = h.Bot.Send(m.Chat, "Heyooo it me again :D")
+	} else {
+		//	1b. if group doesn't exist, bot: "Hello thanks for using homebot"
+		_, _ = h.Bot.Send(m.Chat, "Eyoooo thanks for using Homebot! 😀\nSlide into my DM and run /start.\n Then, run /start_house to start house 🙂")
+	}
 }
 func (h *BotHandler) HandleLeave(m *telebot.Message) {
 	if !m.FromGroup() {
@@ -189,6 +196,7 @@ func (h *BotHandler) HandleLeave(m *telebot.Message) {
 	houseID := m.Chat.ID
 	user := h.queryUserByID(userID)
 	house := h.queryHouseByID(houseID)
+	houseEmpty := false
 	if user == nil {
 		_, _ = h.Bot.Reply(m, "You don't exist yet 🤔")
 		return
@@ -202,20 +210,37 @@ func (h *BotHandler) HandleLeave(m *telebot.Message) {
 		updatedMembers := h.removeUserFromHouse(userID, house.Members)
 		house.Members = updatedMembers
 		houseDoc := h.Firestore.Collection(HOUSE_COLLECTION_PATH).Doc(strconv.FormatInt(houseID, 10))
-		_, err := houseDoc.Set(context.Background(), house)
-		if err != nil {
-			reply := fmt.Sprintf("Error in updating members: %s", err.Error())
-			_, _ = h.Bot.Reply(m, reply)
+
+		//Remove house when it's empty
+		if len(house.Members) == 0 {
+			_, err := houseDoc.Delete(context.Background())
+			houseEmpty = true
+			if err != nil {
+				reply := fmt.Sprintf("Error in deleting house: %s", err.Error())
+				_, _ = h.Bot.Reply(m, reply)
+				return
+			}
+		} else {
+			//else, update it
+			_, err := houseDoc.Set(context.Background(), house)
+			if err != nil {
+				reply := fmt.Sprintf("Error in updating members: %s", err.Error())
+				_, _ = h.Bot.Reply(m, reply)
+				return
+			}
 		}
 
 		user.HouseID = 0
 		userDoc := h.Firestore.Collection(USER_COLLECTION_PATH).Doc(strconv.Itoa(userID))
-		_, err = userDoc.Set(context.Background(), user)
+		_, err := userDoc.Delete(context.Background())
 		if err != nil {
-			reply := fmt.Sprintf("Error in updating user: %s", err.Error())
+			reply := fmt.Sprintf("Error in deleting user: %s", err.Error())
 			_, _ = h.Bot.Reply(m, reply)
 		}
-		_, _ = h.Bot.Reply(m, "You have been successfully removed from this house :)")
+		_, _ = h.Bot.Reply(m, "You have been successfully removed from this house :\")")
+		if houseEmpty {
+			_, _ = h.Bot.Send(m.Chat, "Since there are no more members in the house, this house will be deleted!")
+		}
 		return
 
 	//default: If user.houseID != houseID
