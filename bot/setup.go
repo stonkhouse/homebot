@@ -99,6 +99,11 @@ func (h *BotHandler) HandleStartHouse(m *telebot.Message) {
 	return
 }
 func (h *BotHandler) HandleJoin(m *telebot.Message) {
+	//TODO: Extract all fromgroup check to a middleware
+	if !m.FromGroup() {
+		_, _ = h.Bot.Reply(m, "You can only run this command within a group!")
+		return
+	}
 	userID := m.Sender.ID
 	user := h.queryUserByID(userID)
 	house := h.queryHouseByID(m.Chat.ID)
@@ -149,7 +154,7 @@ func (h *BotHandler) HandleJoin(m *telebot.Message) {
 			fmt.Printf("Paylah link: %s", userObj.PaylahLink)
 
 			userDoc := h.Firestore.Collection(USER_COLLECTION_PATH).Doc(strconv.Itoa(m.Sender.ID))
-			_, err := userDoc.Create(context.Background(), userObj)
+			_, err := userDoc.Set(context.Background(), userObj)
 			fmt.Printf("User Created!")
 			if err != nil {
 				fmt.Printf(err.Error())
@@ -157,8 +162,12 @@ func (h *BotHandler) HandleJoin(m *telebot.Message) {
 			house.Members = append(house.Members, userObj)
 			houseDoc := h.Firestore.Collection(HOUSE_COLLECTION_PATH).Doc(strconv.FormatInt(house.ID, 10))
 			_, err = houseDoc.Set(context.Background(), house)
+			if err != nil {
+				reply := fmt.Sprintf("Error in updating members: %s", err.Error())
+				_, _ = h.Bot.Reply(m, reply)
+			}
 			fmt.Printf("User added to the house")
-			reply := fmt.Sprintf("User @%s has been successfully added to this house.\nWelcome!🎉", userObj.Username)
+			reply := fmt.Sprintf("User @%s has been successfully added to this house.\nWelcome!🥳", userObj.Username)
 			_, _ = h.Bot.Reply(m, reply)
 		} else {
 			_, _ = h.Bot.Send(m.Sender, "Sorry, the password that you entered is not correct, please type /join in your house group again :(")
@@ -170,6 +179,52 @@ func (h *BotHandler) HandleOnAddToGroup(m *telebot.Message) {
 	//	1. Check the database, see if group ID exists in the DB
 	//	1a. if group exists, bot: "Hello welcome back", move to 3
 	//	1b. if group doesn't exist, bot: "Hello thanks for using homebot"
+}
+func (h *BotHandler) HandleLeave(m *telebot.Message) {
+	if !m.FromGroup() {
+		_, _ = h.Bot.Reply(m, "You can only run this command within a group!")
+		return
+	}
+	userID := m.Sender.ID
+	houseID := m.Chat.ID
+	user := h.queryUserByID(userID)
+	house := h.queryHouseByID(houseID)
+	if user == nil {
+		_, _ = h.Bot.Reply(m, "You don't exist yet 🤔")
+		return
+	}
+	switch user.HouseID {
+	case 0:
+		_, _ = h.Bot.Reply(m, "You don't belong to any house!")
+		return
+
+	case houseID:
+		updatedMembers := h.removeUserFromHouse(userID, house.Members)
+		house.Members = updatedMembers
+		houseDoc := h.Firestore.Collection(HOUSE_COLLECTION_PATH).Doc(strconv.FormatInt(houseID, 10))
+		_, err := houseDoc.Set(context.Background(), house)
+		if err != nil {
+			reply := fmt.Sprintf("Error in updating members: %s", err.Error())
+			_, _ = h.Bot.Reply(m, reply)
+		}
+
+		user.HouseID = 0
+		userDoc := h.Firestore.Collection(USER_COLLECTION_PATH).Doc(strconv.Itoa(userID))
+		_, err = userDoc.Set(context.Background(), user)
+		if err != nil {
+			reply := fmt.Sprintf("Error in updating user: %s", err.Error())
+			_, _ = h.Bot.Reply(m, reply)
+		}
+		_, _ = h.Bot.Reply(m, "You have been successfully removed from this house :)")
+		return
+
+	//default: If user.houseID != houseID
+	default:
+		house := h.queryHouseByID(user.HouseID)
+		reply := fmt.Sprintf("You belong to House: %s, please run /leave in the right house 😰", house.HouseName)
+		_, _ = h.Bot.Reply(m, reply)
+		return
+	}
 }
 func (h *BotHandler) queryUserByID(userID int) *User {
 	userDoc, err := h.Firestore.Doc(USER_COLLECTION_PATH + "/" + strconv.Itoa(userID)).Get(context.Background())
@@ -237,4 +292,16 @@ func (h *BotHandler) setPaylahLink(m *telebot.Message) {
 			}
 		}
 	}
+}
+
+func (h *BotHandler) removeUserFromHouse(userID int, members []*User) []*User {
+	j := 0
+	for _, member := range members {
+		if member.ID != userID {
+			members[j] = member
+			j++
+		}
+	}
+	members = members[:j]
+	return members
 }
