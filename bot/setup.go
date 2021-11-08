@@ -184,7 +184,7 @@ func (h *BotHandler) HandleOnAddToGroup(m *telebot.Message) {
 		_, _ = h.Bot.Send(m.Chat, "Heyooo it me again :D")
 	} else {
 		//	1b. if group doesn't exist, bot: "Hello thanks for using homebot"
-		_, _ = h.Bot.Send(m.Chat, "Eyoooo thanks for using Homebot! 😀\nSlide into my DM and run /start.\n Then, run /start_house to start house 🙂")
+		_, _ = h.Bot.Send(m.Chat, "Eyoooo thanks for using Homebot! 😀\nSlide into my DM and run /start.\nThen, run /start_house to start house 🙂")
 	}
 }
 func (h *BotHandler) HandleLeave(m *telebot.Message) {
