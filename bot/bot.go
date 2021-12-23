@@ -8,6 +8,14 @@ import (
 func (h *BotHandler) RegisterBot() {
 	fmt.Printf("Bot is starting...")
 	fmt.Printf(h.Bot.Token)
+	baseURL := "https://tranquil-refuge-31617.herokuapp.com/"
+	webhook := telebot.Webhook{
+		Listen: baseURL + h.Bot.Token,
+	}
+	err := h.Bot.SetWebhook(&webhook)
+	if err != nil {
+		fmt.Printf("Error setting webhook: %s\n", err)
+	}
 	//Setup commands
 	h.Bot.Handle("/start", h.HandleStart)
 	h.Bot.Handle("/start_house", h.HandleStartHouse)
