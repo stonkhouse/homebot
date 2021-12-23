@@ -31,6 +31,7 @@ func main() {
 		Token:  config.Telebot.Token,
 		Poller: &telebot.LongPoller{Timeout: 10 * time.Second},
 	})
+
 	//initializing firebase
 	opt := option.WithCredentialsJSON([]byte(config.Firebase.ConfigString))
 	firebaseApp, err := firebase.NewApp(context.Background(), nil, opt)
