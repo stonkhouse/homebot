@@ -11,7 +11,7 @@ type ServerConfigurations struct {
 }
 
 type DBConfigurations struct {
-	ConfigString string
+	ConfigPath string
 }
 
 type TelebotConfigurations struct {

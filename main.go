@@ -32,7 +32,7 @@ func main() {
 		Poller: &telebot.LongPoller{Timeout: 10 * time.Second},
 	})
 	//initializing firebase
-	opt := option.WithCredentialsJSON([]byte(config.Firebase.ConfigString))
+	opt := option.WithCredentialsFile(config.Firebase.ConfigPath)
 	firebaseApp, err := firebase.NewApp(context.Background(), nil, opt)
 	if err != nil {
 		fmt.Printf("Error initializing Firebase App: %s\n", err)
