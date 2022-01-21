@@ -13,6 +13,7 @@ func (h *BotHandler) RegisterBot() {
 	h.Bot.Handle("/start_house", h.HandleStartHouse)
 	h.Bot.Handle("/join", h.HandleJoin)
 	h.Bot.Handle("/leave", h.HandleLeave)
+	h.Bot.Handle("/new_payment", h.HandlePaymentReminder)
 	h.Bot.Handle(telebot.OnAddedToGroup, h.HandleOnAddToGroup)
 	h.Bot.Start()
 }

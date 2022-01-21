@@ -9,6 +9,7 @@ cloud.google.com/go/internal/optional
 cloud.google.com/go/internal/trace
 cloud.google.com/go/internal/version
 # cloud.google.com/go/firestore v1.1.0
+## explicit
 cloud.google.com/go/firestore
 cloud.google.com/go/firestore/apiv1
 # cloud.google.com/go/storage v1.10.0
@@ -41,6 +42,9 @@ github.com/google/go-cmp/cmp/internal/diff
 github.com/google/go-cmp/cmp/internal/flags
 github.com/google/go-cmp/cmp/internal/function
 github.com/google/go-cmp/cmp/internal/value
+# github.com/google/uuid v1.3.0
+## explicit
+github.com/google/uuid
 # github.com/googleapis/gax-go/v2 v2.0.5
 github.com/googleapis/gax-go/v2
 # github.com/hashicorp/hcl v1.0.0
@@ -153,6 +157,7 @@ golang.org/x/tools/internal/imports
 golang.org/x/xerrors
 golang.org/x/xerrors/internal
 # google.golang.org/api v0.44.0
+## explicit
 google.golang.org/api/googleapi
 google.golang.org/api/googleapi/transport
 google.golang.org/api/internal
@@ -191,6 +196,7 @@ google.golang.org/genproto/googleapis/rpc/status
 google.golang.org/genproto/googleapis/type/expr
 google.golang.org/genproto/googleapis/type/latlng
 # google.golang.org/grpc v1.38.0
+## explicit
 google.golang.org/grpc
 google.golang.org/grpc/attributes
 google.golang.org/grpc/backoff

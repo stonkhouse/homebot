@@ -29,3 +29,10 @@ type User struct {
 	PaylahLink string
 	HouseID    int64
 }
+
+type Payment struct {
+	ID      string
+	Name    string
+	Date    string
+	HouseID int64
+}
