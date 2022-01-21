@@ -42,6 +42,7 @@ func main() {
 	if err != nil {
 		fmt.Printf("Error initializing Firestore: %s\n", err)
 	}
+	//initializing CRON
 	homebotHandler := &BotHandler{
 		Bot:       bot,
 		Firestore: firestore,
@@ -51,5 +52,4 @@ func main() {
 		fmt.Printf("Error starting up bot: %s", err)
 		return
 	}
-
 }
