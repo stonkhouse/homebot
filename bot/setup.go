@@ -11,21 +11,21 @@ import (
 )
 
 const (
-	HOUSE_COLLECTION_PATH     = "houses"
-	USER_COLLECTION_PATH      = "users"
-	DBS_PAYLAH_LINK_SUBSTRING = "https://www.dbs.com.sg/personal/mobile/paylink/index.html?tranRef="
+	HOUSE_COLLECTION_PATH  = "houses"
+	USER_COLLECTION_PATH   = "users"
+	REVOLUT_LINK_SUBSTRING = "https://revolut.me/"
 )
 
 var (
 	passwordChannel chan string
-	paylahChannel   chan string
+	revolutChannel  chan string
 )
 
 func (h *BotHandler) HandleStartHouse(m *telebot.Message) {
 	var (
-		members    []*User
-		password   string
-		paylahLink string
+		members     []*User
+		password    string
+		revolutLink string
 	)
 	// 0. If chat is not a group, exit
 	if !m.FromGroup() {
@@ -51,27 +51,25 @@ func (h *BotHandler) HandleStartHouse(m *telebot.Message) {
 	//	3. user sends password to the bot.
 	h.Bot.Handle(telebot.OnText, h.setPassword)
 	password = <-passwordChannel
-	fmt.Printf("Password set: %s", password)
 
-	//TODO: Extract the set paylah link to a function to avoid repetition
+	//TODO: Extract the set Revolut link to a function to avoid repetition
 
-	//	4. bot prompts user to send paylah link
-	paylahChannel = make(chan string)
-	_, _ = h.Bot.Send(m.Sender, "Please enter your personal PayLah! Wallet Link")
-	h.Bot.Handle(telebot.OnText, h.setPaylahLink)
-	paylahLink = <-paylahChannel
-	fmt.Printf("Paylah Link set: %s", paylahLink)
+	//	4. bot prompts user to send Revolut link
+	revolutChannel = make(chan string)
+	_, _ = h.Bot.Send(m.Sender, "Please enter your personal Revolut link")
+	h.Bot.Handle(telebot.OnText, h.setRevolutLink)
+	revolutLink = <-revolutChannel
 
 	//	5. add user to the db
 	userObj := &User{
-		ID:         m.Sender.ID,
-		Username:   m.Sender.Username,
-		PaylahLink: paylahLink,
-		HouseID:    houseID,
+		ID:          m.Sender.ID,
+		Username:    m.Sender.Username,
+		RevolutLink: revolutLink,
+		HouseID:     houseID,
 	}
 	fmt.Printf("User house ID: %d", userObj.HouseID)
 	fmt.Printf("Username: %s", userObj.Username)
-	fmt.Printf("Paylah link: %s", userObj.PaylahLink)
+	fmt.Printf("Paylah link: %s", userObj.RevolutLink)
 
 	userDoc := h.Firestore.Collection(USER_COLLECTION_PATH).Doc(strconv.Itoa(m.Sender.ID))
 	_, err := userDoc.Set(context.Background(), userObj)
@@ -124,7 +122,7 @@ func (h *BotHandler) HandleJoin(m *telebot.Message) {
 	}
 
 	//1. Bot PM user "pls enter house password"
-	msg := fmt.Sprintf("I see that you're trying to join House: %s\nPlease enter the house password!", house.HouseName)
+	msg := fmt.Sprintf("Welcome to House: %s\nPlease enter the house password!", house.HouseName)
 	_, _ = h.Bot.Send(m.Sender, msg)
 	houseID := m.Chat.ID
 	houseObj := h.queryHouseByID(houseID)
@@ -137,21 +135,20 @@ func (h *BotHandler) HandleJoin(m *telebot.Message) {
 
 		//2. if successful, request for paylah link
 		if password == house.Password {
-			paylahChannel = make(chan string)
-			_, _ = h.Bot.Send(m.Sender, "Please enter your personal PayLah! Wallet Link")
-			h.Bot.Handle(telebot.OnText, h.setPaylahLink)
-			paylahLink := <-paylahChannel
-			fmt.Printf("PayLah Link set: %s", paylahLink)
+			revolutChannel = make(chan string)
+			_, _ = h.Bot.Send(m.Sender, "Please enter your personal Revolut Llink")
+			h.Bot.Handle(telebot.OnText, h.setRevolutLink)
+			paylahLink := <-revolutChannel
 
 			userObj := &User{
-				ID:         m.Sender.ID,
-				Username:   m.Sender.Username,
-				PaylahLink: paylahLink,
-				HouseID:    houseID,
+				ID:          m.Sender.ID,
+				Username:    m.Sender.Username,
+				RevolutLink: paylahLink,
+				HouseID:     houseID,
 			}
 			fmt.Printf("User house ID: %d", userObj.HouseID)
 			fmt.Printf("Username: %s", userObj.Username)
-			fmt.Printf("Paylah link: %s", userObj.PaylahLink)
+			fmt.Printf("Paylah link: %s", userObj.RevolutLink)
 
 			userDoc := h.Firestore.Collection(USER_COLLECTION_PATH).Doc(strconv.Itoa(m.Sender.ID))
 			_, err := userDoc.Set(context.Background(), userObj)
@@ -184,7 +181,7 @@ func (h *BotHandler) HandleOnAddToGroup(m *telebot.Message) {
 		_, _ = h.Bot.Send(m.Chat, "Heyooo it me again :D")
 	} else {
 		//	1b. if group doesn't exist, bot: "Hello thanks for using homebot"
-		_, _ = h.Bot.Send(m.Chat, "Eyoooo thanks for using Homebot! 😀\nSlide into my DM and run /start.\nThen, run /start_house to start house 🙂")
+		_, _ = h.Bot.Send(m.Chat, "Heyoooo thanks for using Homebot! 😀\nSlide into my DM and run /start.\nThen, run /start_house to start house 🙂")
 	}
 }
 func (h *BotHandler) HandleLeave(m *telebot.Message) {
@@ -302,17 +299,17 @@ func (h *BotHandler) checkPassword(m *telebot.Message) {
 		}
 	}
 }
-func (h *BotHandler) setPaylahLink(m *telebot.Message) {
+func (h *BotHandler) setRevolutLink(m *telebot.Message) {
 	for {
 		if m.Chat.Username == m.Sender.Username {
-			if strings.Contains(m.Text, DBS_PAYLAH_LINK_SUBSTRING) {
-				paylahChannel <- m.Text
-				_, _ = h.Bot.Reply(m, "PayLah Link successfully set!")
+			if strings.Contains(m.Text, REVOLUT_LINK_SUBSTRING) {
+				revolutChannel <- m.Text
+				_, _ = h.Bot.Reply(m, "Revolut Link successfully set!")
 				//unset the handler
 				h.Bot.Handle(telebot.OnText, func() {})
 				return
 			} else {
-				_, _ = h.Bot.Reply(m, "Please enter a valid PayLah! link")
+				_, _ = h.Bot.Reply(m, "Please enter a valid Revolut link")
 				return
 			}
 		}

@@ -26,10 +26,10 @@ type House struct {
 }
 
 type User struct {
-	ID         int
-	Username   string
-	PaylahLink string
-	HouseID    int64
+	ID          int
+	Username    string
+	RevolutLink string
+	HouseID     int64
 }
 
 type Payment struct {
