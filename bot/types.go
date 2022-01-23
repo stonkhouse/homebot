@@ -38,4 +38,5 @@ type Payment struct {
 	Date    int
 	Amount  int
 	HouseID int64
+	Payees  []User
 }
