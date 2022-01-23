@@ -38,8 +38,8 @@ func (h *BotHandler) RegisterPaymentReminder() {
 	h.Cron.Start()
 }
 func (h *BotHandler) createPaymentCron(c *cron.Cron, payment *Payment) {
+	//TODO: Handle edge cases: start of the month
 	spec := fmt.Sprintf("39 1 %d * *", payment.Date-1)
-	//spec := fmt.Sprintf("@every 20s")
 	// ! Note the implementation here
 	go func(payment *Payment) {
 		fmt.Printf("New CRON created for payment: %s\n", payment.Name)
